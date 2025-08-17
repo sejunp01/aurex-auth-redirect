@@ -10,56 +10,40 @@
   p{color:#475569;margin:10px 0}
   a{color:#06b6d4;font-weight:800;text-decoration:none}
   button{padding:12px 16px;border-radius:10px;border:none;background:#06b6d4;color:#fff;font-weight:900}
-  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
 </style>
 <div class="box">
   <h1>Opening AUREX…</h1>
   <p>If the app doesn’t open automatically, tap the button below.</p>
-  <div class="row">
-    <button id="open">Open in Expo Go</button>
-    <a id="raw" href="#">Open link directly</a>
-  </div>
-  <p id="hint" style="display:none">If nothing happens, open this page in your device browser (Chrome/Safari) and try again.</p>
+  <p><button id="open">Open in Expo Go</button> <a id="raw" href="#">Open link directly</a></p>
+  <p id="dbg" style="color:#64748b;font-weight:700"></p>
 </div>
 <script>
   function qp(n){return new URL(location.href).searchParams.get(n)||''}
-  var deeplink = decodeURIComponent(qp('to')||'')
-  var hash = location.hash || ''
-  var target = deeplink + (hash||'')
-  var isAndroid = /Android/i.test(navigator.userAgent)
-  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-
-  var openBtn = document.getElementById('open')
-  var raw = document.getElementById('raw')
-  var hint = document.getElementById('hint')
-  raw.href = target || '#'
-
-  function openExp(){
-    if(!target){ return }
-    // 1) 기본 exp:// 시도
-    location.href = target
-    // 2) 안드로이드 폴백: intent:// 로 Expo Go 강제 호출
-    if(isAndroid){
-      setTimeout(function(){
-        try{
-          var noScheme = target.replace(/^exp:\/\//,'')
-          var intent = 'intent://' + noScheme +
-            '#Intent;scheme=exp;package=host.exp.exponent;S.browser_fallback_url=' +
-            encodeURIComponent('https://expo.dev/client') + ';end;'
-          location.href = intent
-        }catch(e){}
-      }, 500)
-    }
-    // 3) iOS 폴백: Expo Go 설치 페이지
-    if(isIOS){
-      setTimeout(function(){
-        location.href = 'https://apps.apple.com/app/expo-go/id982107779'
-      }, 900)
-    }
-    // 4) 최종 힌트 노출
-    setTimeout(function(){ hint.style.display='block' }, 1400)
+  var deeplink = decodeURIComponent(qp('to')||'')          // exp://.../--/auth
+  var hash = location.hash || ''                            // (old) #access_token=...
+  var code = qp('code')                                     // (new) ?code=...
+  var err  = qp('error_description') || qp('error')
+  var target = deeplink || ''
+  if (code) {
+    target += (target.includes('?') ? '&' : '?') + 'code=' + encodeURIComponent(code)
   }
-
-  openBtn.addEventListener('click', openExp)
-  setTimeout(openExp, 300) // 자동 시도
+  if (err) {
+    target += (target.includes('?') ? '&' : '?') + 'error_description=' + encodeURIComponent(err)
+  }
+  if (hash && !code) { target += hash }                     // 구버전 해시도 지원
+  document.getElementById('raw').href = target || '#'
+  document.getElementById('dbg').textContent = target ? ('→ ' + target) : 'No target'
+  function go(){
+    if(!target) return
+    location.href = target
+    setTimeout(function(){                                   // Android intent fallback
+      try{
+        var noScheme = target.replace(/^exp:\/\//,'')
+        var intent='intent://'+noScheme+'#Intent;scheme=exp;package=host.exp.exponent;S.browser_fallback_url='+encodeURIComponent('https://expo.dev/client')+';end;'
+        location.href=intent
+      }catch(e){}
+    },500)
+  }
+  document.getElementById('open').addEventListener('click',go)
+  setTimeout(go,300)
 </script>
