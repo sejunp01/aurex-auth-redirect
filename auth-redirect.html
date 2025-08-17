@@ -6,26 +6,60 @@
 <style>
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;background:#fff}
   .box{max-width:560px;margin:40px auto}
-  h1{font-size:20px;margin:0 0 12px}
+  h1{font-size:22px;margin:0 0 12px}
   p{color:#475569;margin:10px 0}
-  a{color:#06b6d4;font-weight:700;text-decoration:none}
+  a{color:#06b6d4;font-weight:800;text-decoration:none}
   button{padding:12px 16px;border-radius:10px;border:none;background:#06b6d4;color:#fff;font-weight:900}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
 </style>
 <div class="box">
   <h1>Opening AUREX…</h1>
   <p>If the app doesn’t open automatically, tap the button below.</p>
-  <p><button id="open">Open in Expo Go</button></p>
-  <p><a id="raw" href="#">Open link directly</a></p>
+  <div class="row">
+    <button id="open">Open in Expo Go</button>
+    <a id="raw" href="#">Open link directly</a>
+  </div>
+  <p id="hint" style="display:none">If nothing happens, open this page in your device browser (Chrome/Safari) and try again.</p>
 </div>
 <script>
   function qp(n){return new URL(location.href).searchParams.get(n)||''}
-  var deeplink=decodeURIComponent(qp('to')||'')
-  var hash=location.hash||''
-  var target=deeplink+(hash||'')
-  var btn=document.getElementById('open')
-  var raw=document.getElementById('raw')
-  function go(){if(target)location.href=target}
-  raw.href=target||'#'
-  btn.addEventListener('click',go)
-  setTimeout(go,300)
+  var deeplink = decodeURIComponent(qp('to')||'')
+  var hash = location.hash || ''
+  var target = deeplink + (hash||'')
+  var isAndroid = /Android/i.test(navigator.userAgent)
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+
+  var openBtn = document.getElementById('open')
+  var raw = document.getElementById('raw')
+  var hint = document.getElementById('hint')
+  raw.href = target || '#'
+
+  function openExp(){
+    if(!target){ return }
+    // 1) 기본 exp:// 시도
+    location.href = target
+    // 2) 안드로이드 폴백: intent:// 로 Expo Go 강제 호출
+    if(isAndroid){
+      setTimeout(function(){
+        try{
+          var noScheme = target.replace(/^exp:\/\//,'')
+          var intent = 'intent://' + noScheme +
+            '#Intent;scheme=exp;package=host.exp.exponent;S.browser_fallback_url=' +
+            encodeURIComponent('https://expo.dev/client') + ';end;'
+          location.href = intent
+        }catch(e){}
+      }, 500)
+    }
+    // 3) iOS 폴백: Expo Go 설치 페이지
+    if(isIOS){
+      setTimeout(function(){
+        location.href = 'https://apps.apple.com/app/expo-go/id982107779'
+      }, 900)
+    }
+    // 4) 최종 힌트 노출
+    setTimeout(function(){ hint.style.display='block' }, 1400)
+  }
+
+  openBtn.addEventListener('click', openExp)
+  setTimeout(openExp, 300) // 자동 시도
 </script>
