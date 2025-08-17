@@ -19,31 +19,29 @@
 </div>
 <script>
   function qp(n){return new URL(location.href).searchParams.get(n)||''}
-  var deeplink = decodeURIComponent(qp('to')||'')          // exp://.../--/auth
-  var hash = location.hash || ''                            // (old) #access_token=...
-  var code = qp('code')                                     // (new) ?code=...
-  var err  = qp('error_description') || qp('error')
-  var target = deeplink || ''
-  if (code) {
-    target += (target.includes('?') ? '&' : '?') + 'code=' + encodeURIComponent(code)
-  }
-  if (err) {
-    target += (target.includes('?') ? '&' : '?') + 'error_description=' + encodeURIComponent(err)
-  }
-  if (hash && !code) { target += hash }                     // 구버전 해시도 지원
-  document.getElementById('raw').href = target || '#'
-  document.getElementById('dbg').textContent = target ? ('→ ' + target) : 'No target'
+  var deeplink = decodeURIComponent(qp('to')||'');        // exp://.../--/auth
+  var code = qp('code');                                  // ?code=... (Supabase v2)
+  var err  = qp('error_description') || qp('error');
+  var hash = location.hash || '';                         // #access_token=... (old)
+  var target = deeplink || '';
+  if (code) target += (target.includes('?')?'&':'?') + 'code=' + encodeURIComponent(code);
+  if (err)  target += (target.includes('?')?'&':'?') + 'error_description=' + encodeURIComponent(err);
+  if (hash && !code) target += hash;                      // 구버전 해시도 지원
+
+  document.getElementById('raw').href = target || '#';
+  document.getElementById('dbg').textContent = target?('→ '+target):'No target';
+
   function go(){
-    if(!target) return
-    location.href = target
-    setTimeout(function(){                                   // Android intent fallback
+    if(!target) return;
+    location.href = target;
+    setTimeout(function(){                                 // Android intent fallback
       try{
-        var noScheme = target.replace(/^exp:\/\//,'')
-        var intent='intent://'+noScheme+'#Intent;scheme=exp;package=host.exp.exponent;S.browser_fallback_url='+encodeURIComponent('https://expo.dev/client')+';end;'
-        location.href=intent
+        var noScheme = target.replace(/^exp:\/\//,'');
+        var intent='intent://'+noScheme+'#Intent;scheme=exp;package=host.exp.exponent;S.browser_fallback_url='+encodeURIComponent('https://expo.dev/client')+';end;';
+        location.href=intent;
       }catch(e){}
-    },500)
+    },500);
   }
-  document.getElementById('open').addEventListener('click',go)
-  setTimeout(go,300)
+  document.getElementById('open').addEventListener('click',go);
+  setTimeout(go,300);
 </script>
