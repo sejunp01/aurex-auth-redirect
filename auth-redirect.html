@@ -5,19 +5,21 @@
     <title>Redirecting...</title>
     <script>
       window.onload = function () {
-        // 현재 URL 가져오기
         const url = window.location.href;
 
-        // #으로 온 경우 (fragment → query 로 변환)
+        // 1) #fragment → ?query 로 변환 (Supabase가 해시로 주는 경우)
         if (url.includes("#")) {
           const newUrl = url.replace("#", "?");
           window.location.replace(newUrl);
           return;
         }
 
-        // querystring 이라면 그대로 exp:// 로 포워딩
+        // 2) 쿼리 파라미터 추출
         const params = new URLSearchParams(window.location.search);
-        const expUrl = "exp://192.168.123.106:8081/--/auth?" + params.toString();
+
+        // 3) Expo 앱 스킴으로 리다이렉트 (app.json 에 설정한 scheme 사용!)
+        const expUrl = "exp://127.0.0.1:8081/--/auth?" + params.toString();
+        // 👉 실제 앱 배포시에는 "racketmatch://auth?" 같은 custom scheme 으로 변경해야 함
 
         window.location.replace(expUrl);
       };
