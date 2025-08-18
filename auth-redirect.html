@@ -10,31 +10,36 @@
   p{color:#475569;margin:10px 0}
   a{color:#06b6d4;font-weight:800;text-decoration:none}
   button{padding:12px 16px;border-radius:10px;border:none;background:#06b6d4;color:#fff;font-weight:900}
+  .muted{color:#64748b;font-weight:700;word-break:break-all}
 </style>
 <div class="box">
   <h1>Opening AUREX…</h1>
   <p>If the app doesn’t open automatically, tap the button below.</p>
   <p><button id="open">Open in Expo Go</button> <a id="raw" href="#">Open link directly</a></p>
-  <p id="dbg" style="color:#64748b;font-weight:700"></p>
+  <p id="dbg" class="muted"></p>
 </div>
 <script>
   function qp(n){return new URL(location.href).searchParams.get(n)||''}
-  var deeplink = decodeURIComponent(qp('to')||'');        // exp://.../--/auth
+  var deeplink = decodeURIComponent(qp('to')||'');        // exp://<host>/--/auth
   var code = qp('code');                                  // ?code=... (Supabase v2)
   var err  = qp('error_description') || qp('error');
-  var hash = location.hash || '';                         // #access_token=... (old)
+  var hash = location.hash || '';                         // #access_token=...&refresh_token=... (old)
   var target = deeplink || '';
   if (code) target += (target.includes('?')?'&':'?') + 'code=' + encodeURIComponent(code);
   if (err)  target += (target.includes('?')?'&':'?') + 'error_description=' + encodeURIComponent(err);
   if (hash && !code) target += hash;                      // 구버전 해시도 지원
 
-  document.getElementById('raw').href = target || '#';
-  document.getElementById('dbg').textContent = target?('→ '+target):'No target';
+  var dbg = document.getElementById('dbg');
+  var raw = document.getElementById('raw');
+  raw.href = target || '#';
+  dbg.textContent = target?('→ '+target):'No target (missing ?to=exp://...)';
 
   function go(){
     if(!target) return;
+    // 기본 시도
     location.href = target;
-    setTimeout(function(){                                 // Android intent fallback
+    // Android 인텐트 폴백
+    setTimeout(function(){
       try{
         var noScheme = target.replace(/^exp:\/\//,'');
         var intent='intent://'+noScheme+'#Intent;scheme=exp;package=host.exp.exponent;S.browser_fallback_url='+encodeURIComponent('https://expo.dev/client')+';end;';
