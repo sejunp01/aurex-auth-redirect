@@ -1,52 +1,29 @@
-<!doctype html>
-<html lang="en">
-<meta charset="utf-8">
-<title>Opening AUREX…</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;background:#fff}
-  .box{max-width:560px;margin:40px auto}
-  h1{font-size:22px;margin:0 0 12px}
-  p{color:#475569;margin:10px 0}
-  a{color:#06b6d4;font-weight:800;text-decoration:none}
-  button{padding:12px 16px;border-radius:10px;border:none;background:#06b6d4;color:#fff;font-weight:900}
-  .muted{color:#64748b;font-weight:700;word-break:break-all}
-</style>
-<div class="box">
-  <h1>Opening AUREX…</h1>
-  <p>If the app doesn’t open automatically, tap the button below.</p>
-  <p><button id="open">Open in Expo Go</button> <a id="raw" href="#">Open link directly</a></p>
-  <p id="dbg" class="muted"></p>
-</div>
-<script>
-  function qp(n){return new URL(location.href).searchParams.get(n)||''}
-  var deeplink = decodeURIComponent(qp('to')||'');        // exp://<host>/--/auth
-  var code = qp('code');                                  // ?code=... (Supabase v2)
-  var err  = qp('error_description') || qp('error');
-  var hash = location.hash || '';                         // #access_token=...&refresh_token=... (old)
-  var target = deeplink || '';
-  if (code) target += (target.includes('?')?'&':'?') + 'code=' + encodeURIComponent(code);
-  if (err)  target += (target.includes('?')?'&':'?') + 'error_description=' + encodeURIComponent(err);
-  if (hash && !code) target += hash;                      // 구버전 해시도 지원
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+    <script>
+      window.onload = function () {
+        // 현재 URL 가져오기
+        const url = window.location.href;
 
-  var dbg = document.getElementById('dbg');
-  var raw = document.getElementById('raw');
-  raw.href = target || '#';
-  dbg.textContent = target?('→ '+target):'No target (missing ?to=exp://...)';
+        // #으로 온 경우 (fragment → query 로 변환)
+        if (url.includes("#")) {
+          const newUrl = url.replace("#", "?");
+          window.location.replace(newUrl);
+          return;
+        }
 
-  function go(){
-    if(!target) return;
-    // 기본 시도
-    location.href = target;
-    // Android 인텐트 폴백
-    setTimeout(function(){
-      try{
-        var noScheme = target.replace(/^exp:\/\//,'');
-        var intent='intent://'+noScheme+'#Intent;scheme=exp;package=host.exp.exponent;S.browser_fallback_url='+encodeURIComponent('https://expo.dev/client')+';end;';
-        location.href=intent;
-      }catch(e){}
-    },500);
-  }
-  document.getElementById('open').addEventListener('click',go);
-  setTimeout(go,300);
-</script>
+        // querystring 이라면 그대로 exp:// 로 포워딩
+        const params = new URLSearchParams(window.location.search);
+        const expUrl = "exp://192.168.123.106:8081/--/auth?" + params.toString();
+
+        window.location.replace(expUrl);
+      };
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to app...</p>
+  </body>
+</html>
