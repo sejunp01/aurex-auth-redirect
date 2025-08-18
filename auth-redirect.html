@@ -7,7 +7,7 @@
       window.onload = function () {
         const url = window.location.href;
 
-        // 1) #fragment → ?query 로 변환 (Supabase가 해시로 주는 경우)
+        // 1) Supabase가 #fragment 로 토큰을 보내는 경우 → querystring 으로 변환
         if (url.includes("#")) {
           const newUrl = url.replace("#", "?");
           window.location.replace(newUrl);
@@ -17,10 +17,11 @@
         // 2) 쿼리 파라미터 추출
         const params = new URLSearchParams(window.location.search);
 
-        // 3) Expo 앱 스킴으로 리다이렉트 (app.json 에 설정한 scheme 사용!)
-        const expUrl = "exp://127.0.0.1:8081/--/auth?" + params.toString();
-        // 👉 실제 앱 배포시에는 "racketmatch://auth?" 같은 custom scheme 으로 변경해야 함
+        // 3) Expo Metro Bundler (LAN IP) 로 강제 redirect
+        const expUrl =
+          "exp://192.168.123.106:8081/--/auth?" + params.toString();
 
+        // 실제 앱으로 이동
         window.location.replace(expUrl);
       };
     </script>
